@@ -35,7 +35,7 @@ export default function SignUpp() {
             const data = await res.json();
             if (res.ok) {
                 alert("Signup Successfull..!");
-                navigate("/")
+                navigate("/sign-in")
             } else {
                 setLoading(false);
                 return setErrorMessage(data.message);
