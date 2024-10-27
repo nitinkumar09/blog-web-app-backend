@@ -3,7 +3,9 @@ import bcryptjs from "bcryptjs"
 import { errorHandler } from "../utils/error.js";
 export const signup = async (req, res, next) => {
     const { username, password, email } = req.body;
-
+    if (!password) {
+        return res.status(400).json({ error: 'Password is required.' });
+    }
     const hashedPassword = bcryptjs.hashSync(password, 10)
 
     try {
@@ -26,4 +28,4 @@ export const signup = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
-};
+}; 
