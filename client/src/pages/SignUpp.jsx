@@ -54,7 +54,7 @@ export default function SignUpp() {
                 <div className="flex-1">
                     <Link to="/" className="font-bold dark:text-white text-4xl">
                         <span className="px-3 py-[1px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg text-white">
-                            Nitin's
+                            Nitin&apos;s
                         </span>
                         Blog
                     </Link>
