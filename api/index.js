@@ -14,12 +14,9 @@ mongoose.connect(process.env.MONGO).then(() => {
     console.log(error)
 });
 const app = express();
-app.use(cors({
-    origin: "http://your-frontend-domain.com", // Update with your frontend URL
-    credentials: true,
-}));
-app.use(express.json());
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(cookieParser());
+app.use(express.json());
 app.listen(3000, () => {
     console.log("Server is running on port 3000");
 });

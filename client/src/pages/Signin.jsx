@@ -23,18 +23,19 @@ export default function SignIn() {
         }
         try {
             dispatch(signInStart());
-            const res = await fetch('/api/auth/signin', {  // Corrected route
+            const res = await fetch('http://localhost:3000/api/auth/signin', {  // Corrected route
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
             });
-
+            console.log('Response status:', res.status);
             const data = await res.json();
             if (data.success === false) {
                 dispatch(signInFailure(data.message));
             }
             if (res.ok) {
-                dispatch(signInSuccess(data));
+                dispatch(signInSuccess(data.user));
+                localStorage.setItem("token", data.token)
                 alert("Signin Successfull..!");
                 navigate("/")
             } else {

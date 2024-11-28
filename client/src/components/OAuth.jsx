@@ -15,7 +15,7 @@ export default function OAuth() {
         try {
             const resultsFromGoogle = await signInWithPopup(auth, provider)
             console.log("phtoturl:", resultsFromGoogle.user.photoURL)
-            const res = await fetch("/api/auth/google", {
+            const res = await fetch("http://localhost:3000/api/auth/google", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -26,7 +26,8 @@ export default function OAuth() {
             })
             const data = await res.json();
             if (res.ok) {
-                dispatch(signInSuccess(data));
+                dispatch(signInSuccess(data.user));
+                localStorage.setItem("token", data.token)
                 alert("Login with Google Successfull..!");
                 navigate("/")
             }
