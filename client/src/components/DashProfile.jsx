@@ -84,6 +84,7 @@ export default function DashProfile() {
         setUpdateUserSuccess(null);
         // Check if formData is empty
         if (Object.keys(formData).length === 0) {
+
             setUpdateUserError('No changes mode');
             return;
         }
