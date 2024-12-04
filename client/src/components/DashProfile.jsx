@@ -3,13 +3,14 @@ import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux"
 import { getDownloadURL, getStorage, ref, uploadBytesResumable } from "firebase/storage"
 import { app } from "../firebase";
+import { Link } from "react-router-dom"
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { updateStart, updateSuccess, updateFailure, deleteUserStart, deleteUserFailure, deleteUserSuccess, signoutSuccess } from "../redux/user/userSlice";
 import { useDispatch } from "react-redux";
 import { HiOutlineExclamationCircle } from "react-icons/hi"
 export default function DashProfile() {
-    const { currentUser, error } = useSelector((state) => state.user);
+    const { currentUser, error, loading } = useSelector((state) => state.user);
     const [imageFile, setImageFile] = useState(null);
     const [imageFileUrl, setImageFileUrl] = useState(null);
     const [imageFileUploading, setImageFileUploading] = useState(false);
@@ -221,10 +222,23 @@ export default function DashProfile() {
                 <TextInput type="text" id="username" placeholder="username" defaultValue={currentUser.username} onChange={handleChange} />
                 <TextInput type="email" id="email" placeholder="email" defaultValue={currentUser.email} onChange={handleChange} />
                 <TextInput type="password" id="password" placeholder="password" onChange={handleChange} />
-                {/* <Button type="submit" gradientDuoTone="purpleToBlue" outline>Update</Button> */}
-                <Button type="submit" gradientDuoTone="purpleToBlue" outline disabled={imageFileUploadProgress && imageFileUploadProgress < 100}>
+                <Button type="submit" gradientDuoTone="purpleToBlue" outline disabled={loading || imageFileUploading}>{loading ? "Loading..." : "Update"}</Button>
+                {/* <Button type="submit" gradientDuoTone="purpleToBlue" outline disabled={imageFileUploadProgress && imageFileUploadProgress < 100}>
                     {imageFileUploadProgress && imageFileUploadProgress < 100 ? "Uploading..." : "Update"}
-                </Button>
+                </Button> */}
+                {
+                    currentUser.isAdmin && (
+                        <Link to={'/create-post'}>
+                            <Button
+                                type="button"
+                                gradientDuoTone="purpleToPink"
+                                className="w-full"
+                            >
+                                Create a post
+                            </Button>
+                        </Link>
+                    )
+                }
 
             </form>
             <div className="text-red-500 flex justify-between mt-5">
