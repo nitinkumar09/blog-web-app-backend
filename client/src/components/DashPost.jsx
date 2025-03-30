@@ -1,5 +1,6 @@
-import { Table, TableHeadCell } from "flowbite-react";
+import { Button, Modal, Table } from "flowbite-react";
 import { useEffect, useState } from "react"
+import { HiOutlineExclamationCircle } from "react-icons/hi";
 import { useSelector } from "react-redux"
 import { Link } from "react-router-dom";
 
@@ -7,7 +8,9 @@ export default function DashPost() {
     const { currentUser } = useSelector((state) => state.user)
     const [userPosts, setUserPosts] = useState([]);
     const [showMore, setShowMore] = useState(true);
-    console.log(userPosts);
+    const [showModal, setShowModal] = useState(false);
+    const [postIdToDelete, setPostIdToDelete] = useState('');
+    console.log(postIdToDelete);
     useEffect(() => {
         const fetchPosts = async () => {
             try {
@@ -45,6 +48,35 @@ export default function DashPost() {
         }
     }
 
+    const handleDeletePost = async () => {
+        setShowModal(false);
+        const token = localStorage.getItem("token");
+        try {
+            const res = await fetch(`http://localhost:3000/api/post/deletepost/${postIdToDelete}/${currentUser._id}`, {
+                method: 'DELETE',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` // Include the token in the Authorization header
+                },
+            });
+
+            console.log(postIdToDelete, currentUser._id);
+            const data = await res.json();
+            if (!res.ok) {
+                console.log(data.message);  // This will print server error messages
+                return;
+            }
+
+            setUserPosts((prev) =>
+                prev.filter((post) => post._id !== postIdToDelete)
+            );
+
+        } catch (error) {
+            console.log(error.message);
+        }
+    };
+
+
     return (
         <div className="table-auto overflow-x-scroll md:mx-auto p-3 scrollbar scrollbar-track-slate-100  scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-thumb-slate-500">
             {currentUser.isAdmin && userPosts.length > 0 ? (
@@ -61,7 +93,7 @@ export default function DashPost() {
                             </Table.HeadCell>
                         </Table.Head>
                         {userPosts.map((post) => (
-                            <Table.Body className="divide-y">
+                            <Table.Body key={post._id} className="divide-y">
                                 <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
 
                                     <Table.Cell>
@@ -85,7 +117,10 @@ export default function DashPost() {
                                     </Table.Cell>
 
                                     <Table.Cell>
-                                        <span className="font-medium text-red-500 hover:underline cursor-pointer">Delete</span>
+                                        <span onClick={() => {
+                                            setShowModal(true);
+                                            setPostIdToDelete(post._id);
+                                        }} className="font-medium text-red-500 hover:underline cursor-pointer">Delete</span>
                                     </Table.Cell>
 
 
@@ -109,8 +144,20 @@ export default function DashPost() {
                 </>
             ) : (
                 <p>You have no posts yet!</p>
-            )
-            }
+            )}
+            <Modal show={showModal} onClose={() => setShowModal(false)} popup size="md">
+                <Modal.Header />
+                <Modal.Body>
+                    <div className="text-center">
+                        <HiOutlineExclamationCircle className="h-14 w-14 text-gray-400 dark:text-gray-200 mb-4 mx-auto" />
+                        <h3 className="mb-5 text-lg text-gray-500 dark:text-gray-400">Are you sure you want to delete this post?</h3>
+                        <div className="flex justify-center gap-4">
+                            <Button color="failure" onClick={handleDeletePost}>Yes, I,m sure </Button>
+                            <Button color="gray" onClick={() => setShowModal(false)}>No,cancel</Button>
+                        </div>
+                    </div>
+                </Modal.Body>
+            </Modal>
         </div >
     )
 }
