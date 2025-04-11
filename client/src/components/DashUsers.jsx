@@ -54,36 +54,34 @@ export default function DashUsers() {
         }
     }
 
-    // const handleDeleteUser = async () => {
-    //     setShowModal(false);
-    //     const token = localStorage.getItem("token");
-    //     try {
-    //         const res = await fetch(`http://localhost:3000/api/user/deleteuser/${userIdToDelete}/${currentUser._id}`, {
-    //             method: 'DELETE',
-    //             headers: {
-    //                 "Content-Type": "application/json",
-    //                 "Authorization": `Bearer ${token}` // Include the token in the Authorization header
-    //             },
-    //         });
+    const handleDeleteUser = async () => {
+        setShowModal(false);
+        const token = localStorage.getItem("token");
+        try {
+            const res = await fetch(`http://localhost:3000/api/user/delete/${userIdToDelete}`, {
+                method: 'DELETE',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` // Include the token in the Authorization header
+                },
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                console.log(data.message);  // This will print server error messages
+                return;
+            }
 
-    //         console.log(userIdToDelete, currentUser._id);
-    //         const data = await res.json();
-    //         if (!res.ok) {
-    //             console.log(data.message);  // This will print server error messages
-    //             return;
-    //         }
+            setUser((prev) =>
+                prev.filter((user) => user._id !== userIdToDelete)
+            );
 
-    //         setUser((prev) =>
-    //             prev.filter((post) => post._id !== userIdToDelete)
-    //         );
-
-    //     } catch (error) {
-    //         console.log(error.message);
-    //     }
-    // };
+        } catch (error) {
+            console.log(error.message);
+        }
+    };
 
 
-    const handleDeleteUser = async()=>{};
+   
 
     return (
         <div className="table-auto overflow-x-scroll md:mx-auto p-3 scrollbar scrollbar-track-slate-100  scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-thumb-slate-500">
