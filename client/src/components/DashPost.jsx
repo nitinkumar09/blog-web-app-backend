@@ -26,10 +26,10 @@ export default function DashPost() {
                 console.log(error.message);
             }
         }
-        if (currentUser.isAdmin) {
+        if (currentUser && currentUser.isAdmin) {
             fetchPosts();
-        }
-    }, [currentUser._id]);
+          }
+    }, [currentUser]);
 
 
     const handleShowMore = async () => {
