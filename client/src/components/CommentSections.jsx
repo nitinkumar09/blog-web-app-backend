@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link,useNavigate } from "react-router-dom";
 import {Alert, Button, TextInput} from "flowbite-react"
 import { useEffect, useState } from "react";
 import Comment from "./Comment";
@@ -8,6 +8,7 @@ export default function CommentSections({ postId }) {
   const { currentUser } = useSelector(state => state.user);
   const [comment,setComment] = useState('');
   const [comments,setComments] = useState([]);
+  const navigate = useNavigate();
 
   const [commentError,setCommentError] = useState(null);
   console.log(comments)
@@ -66,6 +67,38 @@ export default function CommentSections({ postId }) {
   }, [postId])
   
 
+  const handleLike = async(commentId) =>{
+              try {
+                if(!currentUser)
+                {
+                    navigate('/sign-in');
+                    return;
+                }
+              const token = localStorage.getItem("token"); // Retrieve the token from localStorage
+              const res = await fetch(`http://localhost:3000/api/comment/likeComment/${commentId}`,{
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}` // Include the token in the Authorization header
+              },
+               credentials: "include",
+             });
+             if(res.ok){
+              const data = await res.json();
+              setComments(comments.map((comment)=>
+                    comment._id == commentId ?{
+                        ... comment,
+                        likes:data.likes,
+                        numberOfLikes:data.likes.length
+                    }:comment
+              ));
+            }
+              } catch (error) {
+                console.log(error.message)
+              }
+  }
+  
+
   return (
     <div className="max-w-2xl mx-auto w-full p-3">
       {currentUser ? (
@@ -112,7 +145,7 @@ export default function CommentSections({ postId }) {
         </div>
         {
           comments.map(comment=>(
-               <Comment key={comment._id} comment={comment}/>
+               <Comment key={comment?._id} comment={comment} onLike={handleLike} />
           ))
         }
         </>
