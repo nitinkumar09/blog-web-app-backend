@@ -30,31 +30,29 @@ export const getposts = async (req, res, next) => {
         const startIndex = parseInt(req.query.startIndex) || 0;
         const limit = parseInt(req.query.limit) || 9;
         const sortDirection = req.query.sort === 'desc' ? -1 : 1;
+        const searchTerm = req.query.searchTerm || '';
+        const category = req.query.category || '';
 
-        const posts = await Post.find()
+        const query = {};
+
+        if (searchTerm) {
+            query.title = { $regex: searchTerm, $options: 'i' }; // case-insensitive search
+        }
+
+        if (category && category !== 'uncategorized') {
+            query.category = category;
+        }
+
+        const posts = await Post.find(query)
             .sort({ createdAt: sortDirection })
             .skip(startIndex)
             .limit(limit);
 
-        const totalPosts = await Post.countDocuments();
-
-        // 🟢 CHANGE 1: Same logic — get 1st day of this & last month
-        const now = new Date();
-        const firstDayOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-
-        // 🟢 CHANGE 2: Count posts created in the full last calendar month
-        const lastMonthPosts = await Post.countDocuments({
-            createdAt: {
-                $gte: firstDayOfLastMonth,
-                $lt: firstDayOfThisMonth,
-            },
-        });
+        const totalPosts = await Post.countDocuments(query);
 
         res.status(200).json({
             posts,
             totalPosts,
-            lastMonthPosts,
         });
     } catch (error) {
         next(error);
