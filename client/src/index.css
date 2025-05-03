@@ -41,3 +41,29 @@ body {
 .dark .post-content a {
     color: red !important;
 }
+
+/* make scroolbar stylish start here .  */
+/* Scrollbar styling */
+.scrollbar-colored::-webkit-scrollbar {
+    height: 8px;
+    /* For horizontal scrollbars */
+}
+
+.scrollbar-colored::-webkit-scrollbar-track {
+    background: #dc7474;
+    /* Light track background */
+}
+
+.scrollbar-colored::-webkit-scrollbar-thumb {
+    background: linear-gradient(to right, #c46818, #ff57ab);
+    border-radius: 9999px;
+}
+
+/* Firefox support */
+.scrollbar-colored {
+    scrollbar-width: thin;
+    scrollbar-color: #2bc41e #cf6083;
+}
+
+
+/* make scroolbar stylish end here.  */

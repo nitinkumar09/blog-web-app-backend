@@ -15,7 +15,7 @@ export const verifyToken = (req, res, next) => {
         const token = authHeader.split(" ")[1];
 
         // Log the token for debugging (optional)
-        console.log("Access Token:", token);
+        // console.log("Access Token:", token);
 
         // Verify the token using the secret
         jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
