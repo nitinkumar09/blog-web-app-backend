@@ -23,8 +23,6 @@ export const create = async (req, res, next) => {
 };
 
 
-
-
 export const getposts = async (req, res, next) => {
     try {
         const startIndex = parseInt(req.query.startIndex) || 0;
@@ -32,11 +30,18 @@ export const getposts = async (req, res, next) => {
         const sortDirection = req.query.sort === 'desc' ? -1 : 1;
         const searchTerm = req.query.searchTerm || '';
         const category = req.query.category || '';
+        const slug = req.query.slug || '';
+
+        if (slug) {
+            const post = await Post.findOne({ slug });
+            if (!post) return res.status(404).json({ message: 'Post not found' });
+            return res.status(200).json({ post });
+        }
 
         const query = {};
 
         if (searchTerm) {
-            query.title = { $regex: searchTerm, $options: 'i' }; // case-insensitive search
+            query.title = { $regex: searchTerm, $options: 'i' };
         }
 
         if (category && category !== 'uncategorized') {
@@ -58,6 +63,42 @@ export const getposts = async (req, res, next) => {
         next(error);
     }
 };
+
+
+
+
+// export const getposts = async (req, res, next) => {
+//     try {
+//         const startIndex = parseInt(req.query.startIndex) || 0;
+//         const limit = parseInt(req.query.limit) || 9;
+//         const sortDirection = req.query.sort === 'desc' ? -1 : 1;
+//         const searchTerm = req.query.searchTerm || '';
+//         const category = req.query.category || '';
+//         const query = {};
+
+//         if (searchTerm) {
+//             query.title = { $regex: searchTerm, $options: 'i' }; // case-insensitive search
+//         }
+
+//         if (category && category !== 'uncategorized') {
+//             query.category = category;
+//         }
+
+//         const posts = await Post.find(query)
+//             .sort({ createdAt: sortDirection })
+//             .skip(startIndex)
+//             .limit(limit);
+
+//         const totalPosts = await Post.countDocuments(query);
+
+//         res.status(200).json({
+//             posts,
+//             totalPosts,
+//         });
+//     } catch (error) {
+//         next(error);
+//     }
+// };
 
 
 

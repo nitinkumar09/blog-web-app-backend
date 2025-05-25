@@ -25,7 +25,12 @@ export default function PostPage() {
                 }
                 if(res.ok)
                 {
-                    setPost(data.posts[0]);
+                   if (data.post || data.posts?.length > 0) {
+  setPost(data.post || data.posts[0]);
+} else {
+  setError(true);
+}
+
                     setError(false);
                     setLoading(false);
                 }

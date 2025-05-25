@@ -1,8 +1,8 @@
 import { Alert, Button, Modal, TextInput } from "flowbite-react"
 import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux"
-import { getDownloadURL, getStorage, ref, uploadBytesResumable } from "firebase/storage"
-import { app } from "../firebase";
+import { supabase } from "../supabase";
+
 import { Link } from "react-router-dom"
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
@@ -18,7 +18,7 @@ export default function DashProfile() {
     const [imageFileUploadProgress, setImageFileUploadProgress] = useState(null);
     const [updateUserError, setUpdateUserError] = useState(null);
     const [showModal, setShowModal] = useState(false);
-    const [formData, setFormData] = useState({})
+    const [formData, setFormData] = useState({});
     const [imageFileUploadError, setImageFileUploadError] = useState(null);
     const filePickerRef = useRef();
     const dispatch = useDispatch();
@@ -36,48 +36,92 @@ export default function DashProfile() {
         }
     }, [imageFile]);
 
-    const uploadImage = async () => {
-        // service firebase.storage{
-        //     match / b / { bucket } / o{
-        //         match / { allPaths=**}
-        //         {
-        //             allow read;
-        //             allow write: if
-        //             request.resource.size < 2 * 1024 *1024 &&
-        //             request.resource.contentType.matches('image/.*')
-        //         }
-        //     }
-        // }
-        setImageFileUploading(true);
-        setImageFileUploadError(null);
-        const storage = getStorage(app);
-        const fileName = new Date().getTime() + imageFile.name;
-        const storageRef = ref(storage, fileName);
-        const uploadTask = uploadBytesResumable(storageRef, imageFile);
-        uploadTask.on(
-            'state_changed',
-            (snapshot) => {
-                const progress =
-                    (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setImageFileUploadProgress(progress.toFixed(0));
-            },
-            (error) => {
-                setImageFileUploadError('Could not upload image (File must be less than 2MB)');
-                setImageFileUploadProgress(null);
-                setImageFile(null)
-                setImageFileUrl(null)
-                setImageFileUploading(false);
-            },
-            () => {
-                getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                    setImageFileUrl(downloadURL);
-                    setFormData({ ...formData, profilePicture: downloadURL });
-                    setImageFileUploading(false);
-                });
-            }
-        );
 
-    };
+
+
+//    const uploadImage = async () => {
+//     setImageFileUploading(true);
+//     setImageFileUploadError(null);
+
+//     const fileExt = imageFile.name.split('.').pop();
+//     const fileName = `${Date.now()}.${fileExt}`;
+//     const filePath = `profile-pictures/${fileName}`;
+
+//     const { error: uploadError } = await supabase.storage
+//         .from('postblogwebapp') // <- change to your actual bucket name
+//         .upload(filePath, imageFile, {
+//             cacheControl: '3600',
+//             upsert: false
+//         });
+// // console.log(uploadError)
+//     if (uploadError) {
+//         setImageFileUploadError('Could not upload image (File must be less than 2MB)');
+//         setImageFileUploadProgress(null);
+//         setImageFile(null);
+//         setImageFileUrl(null);
+//         setImageFileUploading(false);
+//         return;
+//     }
+
+//     const { data } = supabase.storage
+//         .from('postblogwebapp')
+//         .getPublicUrl(filePath);
+
+//     if (data?.publicUrl) {
+//         setImageFileUrl(data.publicUrl);
+//         setFormData({ ...formData, profilePicture: data.publicUrl });
+//         setImageFileUploading(false);
+//     } else {
+//         setImageFileUploadError('Failed to get image URL');
+//         setImageFileUploading(false);
+//     }
+// };
+
+
+
+
+const uploadImage = async () => {
+  setImageFileUploading(true);
+  setImageFileUploadError(null);
+
+  const fileExt = imageFile.name.split('.').pop();
+  const fileName = `${Date.now()}.${fileExt}`;
+  const filePath = `profile-pictures/${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('postblogwebapp')
+    .upload(filePath, imageFile, {
+      cacheControl: '3600',
+      upsert: false
+    });
+
+  if (uploadError) {
+    setImageFileUploadError('Could not upload image (File must be less than 2MB)');
+    setImageFile(null);
+    setImageFileUrl(null);
+    setImageFileUploading(false);
+    return;
+  }
+
+  const { data, error: publicUrlError } = supabase.storage
+    .from('postblogwebapp')
+    .getPublicUrl(filePath);
+
+  if (publicUrlError || !data?.publicUrl) {
+    setImageFileUploadError('Failed to get image URL');
+    setImageFileUploading(false);
+    return;
+  }
+
+  setImageFileUrl(data.publicUrl);
+  setFormData({ ...formData, profilePicture: data.publicUrl });
+  setImageFileUploading(false);
+};
+
+
+
+
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.id]: e.target.value })
     }
@@ -103,8 +147,9 @@ export default function DashProfile() {
 
             // Make the API request
             // const res = await fetch(`http://localhost:3000/api/user/update/673e5f3c8448337f98b5bda3`, {
-            console.log(currentUser._id)
+            console.log("user id",currentUser._id)
 
+            // console.log(formData)
             const token = localStorage.getItem("token"); // Retrieve the token from localStorage
 
             const res = await fetch(`http://localhost:3000/api/user/update/${currentUser?._id}`, {
@@ -127,6 +172,7 @@ export default function DashProfile() {
 
             // Parse the response
             const data = await res.json();
+            console.log(formData)
 
             if (!res.ok) {
                 // Dispatch failure action if the response is not OK
@@ -136,9 +182,14 @@ export default function DashProfile() {
                 // Dispatch success action on success
                 dispatch(updateSuccess(data));
                 setUpdateUserSuccess("User's profile updated successfully");
+                setTimeout(() => {
+              setUpdateUserSuccess("");
+           }, 30000);
+
             }
         } catch (error) {
             // Dispatch failure action in case of an error
+            console.log("Error in catch")
             dispatch(updateFailure(error.message));
             setUpdateUserError(error.message);
         }
@@ -197,35 +248,29 @@ export default function DashProfile() {
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <input type="file" accept="image/*" onChange={handleImageChange} ref={filePickerRef} hidden />
                 <div className="relative w-32 h-32 self-center cursor-pointer shadow-md overflow-hidden rounded-full" onClick={() => filePickerRef.current.click()}>
+                  
+                  
                     {
-                        imageFileUploadProgress && (
-                            <CircularProgressbar value={imageFileUploadProgress || 0} text={`${imageFileUploadProgress}%`} strokeWidth={5}
-                                styles={{
-                                    root: {
-                                        width: '100%',
-                                        height: '100%',
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                    },
-                                    path: {
-                                        stroke: `rgba(62,152,199,${imageFileUploadProgress / 100})`,
-                                    }
-                                }}
-                            />
-                        )
-                    }
+  imageFileUploading && (
+    <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-60 rounded-full">
+      <div className="loader"></div> {/* CSS spinner */}
+    </div>
+  )
+}
+
                     <img src={imageFileUrl || currentUser.profilePicture} alt="user" className={`rounded-full w-full h-full object-cover border-8 border-[lightgray] 
                             ${imageFileUploadProgress && imageFileUploadProgress < 100 && 'opacity-60'}`} />
                 </div>
                 {imageFileUploadError && <Alert color="failure">{imageFileUploadError}</Alert>}
                 <TextInput type="text" id="username" placeholder="username" defaultValue={currentUser.username} onChange={handleChange} />
                 <TextInput type="email" id="email" placeholder="email" defaultValue={currentUser.email} onChange={handleChange} />
-                <TextInput type="password" id="password" placeholder="password" onChange={handleChange} />
-                <Button type="submit" gradientDuoTone="purpleToBlue" outline disabled={loading || imageFileUploading}>{loading ? "Loading..." : "Update"}</Button>
-                {/* <Button type="submit" gradientDuoTone="purpleToBlue" outline disabled={imageFileUploadProgress && imageFileUploadProgress < 100}>
+                
+
+                <TextInput type="password" id="password" placeholder="password" defaultValue={currentUser.password}  onChange={handleChange} />
+                {/* <Button type="submit" gradientDuoTone="purpleToBlue" outline disabled={loading || imageFileUploading}>{loading ? "Loading..." : "Update"}</Button> */}
+                <Button type="submit" gradientDuoTone="purpleToBlue" outline disabled={imageFileUploadProgress && imageFileUploadProgress < 100}>
                     {imageFileUploadProgress && imageFileUploadProgress < 100 ? "Uploading..." : "Update"}
-                </Button> */}
+                </Button>
                 {
                     currentUser.isAdmin && (
                         <Link to={'/create-post'}>
