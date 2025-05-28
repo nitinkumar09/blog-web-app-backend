@@ -50,7 +50,6 @@ export default {
   plugins: [
     flowbite.plugin(),
     require('tailwind-scrollbar'),
-    require('@tailwindcss/line-clamp'),
     require('@tailwindcss/typography'), // ✅ Important for prose support
   ],
 };
