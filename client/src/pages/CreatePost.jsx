@@ -13,6 +13,7 @@ export default function CreatePost() {
     const [imageUploadError, setImageUploadError] = useState(null);
     const [formData, setFormData] = useState({});
     const [publishError, setPublishError] = useState(null);
+    const [uploading, setUploading] = useState(false);
     const navigate = useNavigate();
 
     const handleUploadImage = async () => {
@@ -24,32 +25,36 @@ export default function CreatePost() {
 
             setImageUploadError(null);
             setPublishError(null);
+            setUploading(true);
+            setImageUploadProgress(0);
 
             const fileExt = file.name.split('.').pop();
             const fileName = `${Date.now()}.${fileExt}`;
             const filePath = `post-images/${fileName}`;
 
-            const { error: uploadError } = await supabase.storage
-                .from('postblogwebapp') // Change to your actual bucket name
-                .upload(filePath, file);
+            const upload = await supabase.storage
+                .from('postblogwebapp')
+                .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false,
+                });
 
-            if (uploadError) {
-                setImageUploadError('Image upload failed');
-                return;
+            if (upload.error) {
+                throw upload.error;
             }
 
             const { data } = supabase.storage
-                .from('postblogwebapp') // Change to your actual bucket name
+                .from('postblogwebapp')
                 .getPublicUrl(filePath);
 
-            setImageUploadProgress(null);
-            setImageUploadError(null);
             setFormData({ ...formData, image: data.publicUrl });
-
+            setFile(null); // reset file input
         } catch (error) {
-            setImageUploadError('Image upload failed!');
-            setImageUploadProgress(null);
             console.error(error);
+            setImageUploadError('Image upload failed!');
+        } finally {
+            setUploading(false);
+            setImageUploadProgress(null);
         }
     };
 
@@ -75,7 +80,6 @@ export default function CreatePost() {
 
             setPublishError(null);
             navigate(`/post/${data.slug}`);
-
         } catch (error) {
             setPublishError('Something went wrong!');
         }
@@ -98,43 +102,56 @@ export default function CreatePost() {
                         onChange={(e) =>
                             setFormData({ ...formData, category: e.target.value })
                         }
+                        required
                     >
-                        <option value="uncategorized">Select a category</option>
+                        <option value="">Select a category</option>
                         <option value="javascript">JavaScript</option>
                         <option value="reactjs">React.js</option>
                         <option value="nextjs">Next.js</option>
                     </Select>
                 </div>
                 <div className="flex gap-4 items-center justify-between border-4 border-teal-500 border-dotted p-3">
-                    <FileInput type='file' accept="image/*" onChange={(e) => setFile(e.target.files[0])} />
+                    <FileInput
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setFile(e.target.files[0])}
+                        disabled={uploading}
+                    />
                     <Button
                         type="button"
                         gradientDuoTone="purpleToBlue"
                         size="sm"
                         outline
                         onClick={handleUploadImage}
+                        disabled={uploading}
                     >
                         {
-                            imageUploadProgress ?
-                                (
-                                    <div className="w-16 h-16">
-                                        <CircularProgressbar value={imageUploadProgress} text={`${imageUploadProgress || 0}%`} />
-                                    </div>
-                                ) : (
-                                    'Upload Image'
-                                )
+                            uploading ? (
+                                <div className="w-16 h-16">
+                                    <CircularProgressbar
+                                        value={imageUploadProgress || 0}
+                                        text={`${imageUploadProgress || 0}%`}
+                                    />
+                                </div>
+                            ) : 'Upload Image'
                         }
                     </Button>
                 </div>
-                {
-                    imageUploadError &&
+
+                {imageUploadError && (
                     <Alert color="failure">
                         {imageUploadError}
                     </Alert>
-                }
-                {formData.image && (
-                    <img src={formData.image} alt="upload" className="w-full h-72 object-cover" />
                 )}
+
+                {formData.image && (
+                    <img
+                        src={formData.image}
+                        alt="upload"
+                        className="w-full h-72 object-cover"
+                    />
+                )}
+
                 <ReactQuill
                     theme="snow"
                     placeholder="Write something..."
@@ -144,12 +161,19 @@ export default function CreatePost() {
                         setFormData({ ...formData, content: value });
                     }}
                 />
-                <Button type="submit" gradientDuoTone="purpleToPink">
+
+                <Button
+                    type="submit"
+                    gradientDuoTone="purpleToPink"
+                >
                     Publish
                 </Button>
-                {
-                    publishError && <Alert className="mt-5" color="failure">{publishError}</Alert>
-                }
+
+                {publishError && (
+                    <Alert className="mt-5" color="failure">
+                        {publishError}
+                    </Alert>
+                )}
             </form>
         </div>
     );
