@@ -29,8 +29,17 @@ export const signup = async (req, res, next) => {
         // console.log("Data : ", username, email, password)
         res.status(201).json({ message: 'User created successfully!' });
     } catch (error) {
-        next(error);
+        // Handle MongoDB duplicate key error
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyValue)[0]; // 'email' or 'username'
+            return res.status(400).json({
+                message: `${field.charAt(0).toUpperCase() + field.slice(1)} already exists.`
+            });
+        }
+
+        next(error); // fallback for other errors
     }
+
 };
 
 
