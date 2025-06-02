@@ -22,7 +22,7 @@ const app = express();
 // app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 const allowedOrigins = [
     "http://localhost:5173",                    // local dev
-    "https://blog-app-sc2j.onrender.com",      // your live domain
+    "https://blog-web-app-gilt-psi.vercel.app",      // your live domain
 ];
 
 app.use(cors({
